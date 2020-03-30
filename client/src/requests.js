@@ -1,11 +1,17 @@
+import { getAccessToken, isLoggedIn } from './auth';
+
 const endpointURL = 'http://localhost:9000/graphql';
 
 async function graphqlRequest(query, variables = {}) {
-	const response = await fetch(endpointURL, {
+	const request = {
 		method: 'POST',
 		headers: { 'content-type': 'application/json' },
 		body: JSON.stringify({ query, variables })
-	});
+	};
+	if (isLoggedIn()) {
+		request.headers['authorization'] = `Bearer ${getAccessToken()}`;
+	}
+	const response = await fetch(endpointURL, request);
 	const responseBody = await response.json();
 	if (responseBody.errors) {
 		const message = responseBody.errors.map(error => error.message).join('\n');
@@ -14,8 +20,8 @@ async function graphqlRequest(query, variables = {}) {
 	return responseBody.data;
 }
 
-export async function createJob(input){
-  const mutation = `mutation CreateJob($input: CreateJobInput){
+export async function createJob(input) {
+	const mutation = `mutation CreateJob($input: CreateJobInput){
     job: createJob(input: $input){
        id
        title
@@ -25,8 +31,8 @@ export async function createJob(input){
        }
      }
    }`;
-   const {job} = await graphqlRequest(mutation, {input});
-   return job;
+	const { job } = await graphqlRequest(mutation, { input });
+	return job;
 }
 
 export async function loadCompany(id) {
